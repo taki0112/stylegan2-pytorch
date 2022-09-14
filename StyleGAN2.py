@@ -365,6 +365,8 @@ class StyleGAN2():
                 print(self.log_template.format(idx, self.iteration, elapsed, losses['d/loss'], losses['g/loss'],
                                                fid_dict['metric/fid'], fid_dict['metric/best_fid'], fid_dict['metric/best_fid_iter']))
 
+            dist.barrier()
+
         if rank == 0:
             # save model for final step
             self.torch_save(self.iteration)
@@ -372,6 +374,8 @@ class StyleGAN2():
             print("LAST FID: ", fid)
             print("BEST FID: {}, {}".format(best_fid, best_fid_iter))
             print("Total train time: %4.4f" % (time.time() - start_time))
+
+        dist.barrier()
 
     def torch_save(self, idx):
         torch.save(
