@@ -65,15 +65,6 @@ class StyleGAN2():
         self.log_template = 'step [{}/{}]: elapsed: {:.2f}s, d_loss: {:.3f}, g_loss: {:.3f}, fid: {:.2f}, best_fid: {:.2f}, best_fid_iter: {}'
         self.n_sample = args['n_sample']
 
-        """ Directory """
-        self.sample_dir = os.path.join(self.sample_dir, self.model_dir)
-        check_folder(self.sample_dir)
-        self.checkpoint_dir = os.path.join(self.checkpoint_dir, self.model_dir)
-        check_folder(self.checkpoint_dir)
-        self.log_dir = os.path.join(self.log_dir, self.model_dir)
-        check_folder(self.log_dir)
-
-
         """ MISC """
         self.nsml_flag = args['nsml']
 
@@ -88,6 +79,13 @@ class StyleGAN2():
             dataset_path = './dataset'
             self.dataset_path = os.path.join(dataset_path, self.dataset_name)
 
+        """ Directory """
+        self.sample_dir = os.path.join(self.sample_dir, self.model_dir)
+        check_folder(self.sample_dir)
+        self.checkpoint_dir = os.path.join(self.checkpoint_dir, self.model_dir)
+        check_folder(self.checkpoint_dir)
+        self.log_dir = os.path.join(self.log_dir, self.model_dir)
+        check_folder(self.log_dir)
     ##################################################################################
     # Model
     ##################################################################################
@@ -315,7 +313,7 @@ class StyleGAN2():
                         print("BEST FID UPDATED")
                         best_fid = fid
                         best_fid_iter = idx
-                        self.torch_save(idx)
+                        self.torch_save(idx, fid)
 
                         fid_dict['metric/best_fid'] = best_fid
                         fid_dict['metric/best_fid_iter'] = best_fid_iter
@@ -344,10 +342,11 @@ class StyleGAN2():
                         train_summary_writer.add_scalar('fid', fid, global_step=idx)
 
                 # save every self.save_freq
+                """
                 if np.mod(idx + 1, self.save_freq) == 0:
                     print("ckpt save")
                     self.torch_save(idx)
-
+                """
                 if np.mod(idx + 1, self.print_freq) == 0:
                     with torch.no_grad():
                         partial_size = int(self.n_sample ** 0.5)
@@ -369,7 +368,7 @@ class StyleGAN2():
 
         if rank == 0:
             # save model for final step
-            self.torch_save(self.iteration)
+            self.torch_save(self.iteration, fid)
 
             print("LAST FID: ", fid)
             print("BEST FID: {}, {}".format(best_fid, best_fid_iter))
@@ -377,7 +376,7 @@ class StyleGAN2():
 
         dist.barrier()
 
-    def torch_save(self, idx):
+    def torch_save(self, idx, fid):
         torch.save(
             {
                 'generator': self.generator.state_dict(),
@@ -386,7 +385,7 @@ class StyleGAN2():
                 'g_optim': self.g_optim.state_dict(),
                 'd_optim': self.d_optim.state_dict()
             },
-            os.path.join(self.checkpoint_dir, '{}.pt'.format(idx))
+            os.path.join(self.checkpoint_dir, 'iter_{}_fid_{}.pt'.format(idx, fid))
         )
 
     @property
