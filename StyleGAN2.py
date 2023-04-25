@@ -118,8 +118,8 @@ class StyleGAN2():
             """ Optimizer """
             g_reg_ratio = self.g_reg_every / (self.g_reg_every + 1)
             d_reg_ratio = self.d_reg_every / (self.d_reg_every + 1)
-            self.g_optim = torch.optim.Adam(self.generator.parameters(), lr=self.lr, betas=(0 ** g_reg_ratio, 0.99 ** g_reg_ratio))
-            self.d_optim = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr, betas=(0 ** d_reg_ratio, 0.99 ** d_reg_ratio))
+            self.g_optim = torch.optim.Adam(self.generator.parameters(), lr=self.lr * self.g_reg_retio, betas=(0 ** g_reg_ratio, 0.99 ** g_reg_ratio))
+            self.d_optim = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr * self.d_reg_ratio, betas=(0 ** d_reg_ratio, 0.99 ** d_reg_ratio))
 
             """ Distributed Learning """
             self.generator = dataparallel_and_sync(self.generator, rank)
